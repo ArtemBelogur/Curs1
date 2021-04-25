@@ -1,8 +1,11 @@
 package com.example.notisaver;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.drawable.Drawable;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -10,13 +13,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 1;
     private static final String DATABASE_NAME = "messages";
 
-    private static final String TABLE_NAME = "messages";
-    private static final String COLUMN_ID = "_id";
+    private static final String TABLE_MESSAGES = "messages";
+    private static final String COLUMN_ID1 = "_id";
     private static final String PACKAGE_NAME = "package_name";
     private static final String APP_NAME = "app_name";
     private static final String USER = "user";
     private static final String CONTENT = "content";
+    private static final String POST_TIME = "post_time";
+    private static final String CHANEL_ID = "chanel_id";
+    private static final String GROUP_KEY = "group_id";
 
+    private static final String TABLE_LARGE_ICONS = "large_icons";
+    private static final String COLUMN_ID2 = "_id";
+    private static final Drawable LARGE_ICON = null;
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -25,18 +34,53 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String query = "CREATE TABLE " + TABLE_NAME +
-                " (" + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+        String query1 = "CREATE TABLE " + TABLE_MESSAGES +
+                " (" + COLUMN_ID1 + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 PACKAGE_NAME + " TEXT, " +
                 APP_NAME + " TEXT, " +
                 USER + " TEXT, " +
-                CONTENT + " TEXT);";
-        db.execSQL(query);
+                CONTENT + " TEXT, " +
+                POST_TIME + " TEXT, " +
+                CHANEL_ID + " TEXT, " +
+                GROUP_KEY + " TEXT);";
+        db.execSQL(query1);
+
+        String query2 = "CREATE TABLE " + TABLE_MESSAGES +
+                " (" + COLUMN_ID1 + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                GROUP_KEY + " IMAGE);";
+        db.execSQL(query2);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_MESSAGES);
         onCreate(db);
     }
+
+    public void addMessage(String packageName, String appName, String user, String content, String post_time, String chanel_id, String group_key) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+
+        cv.put(PACKAGE_NAME, packageName);
+        cv.put(APP_NAME, appName);
+        cv.put(USER, user);
+        cv.put(CONTENT, content);
+        cv.put(POST_TIME, post_time);
+        cv.put(CHANEL_ID, chanel_id);
+        cv.put(GROUP_KEY, group_key);
+
+        db.insert(TABLE_MESSAGES, null, cv);
+    }
+
+    Cursor readNotifications() {
+        String query = "SELECT * FROM " + TABLE_MESSAGES;
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = null;
+        if (db != null)
+            cursor = db.rawQuery(query, null);
+
+        return cursor;
+    }
+    
 }

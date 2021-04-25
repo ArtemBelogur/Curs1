@@ -1,42 +1,52 @@
 package com.example.notisaver;
 
 import android.app.AlertDialog;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.text.TextUtils;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String ENABLED_NOTIFICATION_LISTENERS = "enabled_notification_listeners";
     private static final String ACTION_NOTIFICATION_LISTENER_SETTINGS = "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS";
 
-    private ImageView interceptedNotificationImageView;
-    private TextView packageName;
-    private TextView user;
-    private TextView textOfNotification;
-    private ImageChangeBroadcastReceiver imageChangeBroadcastReceiver;
-    private ChangeBroadcastReceiver changeBroadcastReceiver;
+    RecyclerView recyclerView;
+
+    DatabaseHelper dbHelper;
+    ArrayList<String> notification_id, package_name, appName, textOfNotification, user, post_time, chanel_id, group_id;
+    NotificationsAdapter notificationsAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Here we get a reference to the image we will modify when a notification is received
-        interceptedNotificationImageView = (ImageView) this.findViewById(R.id.intercepted_notification_logo);
-        packageName = findViewById(R.id.appPackage);
-        user = findViewById(R.id.user);
-        textOfNotification = findViewById(R.id.textOfNotification);
+        recyclerView = findViewById(R.id.recyclerView);
+        dbHelper = new DatabaseHelper(MainActivity.this);
+        notification_id = new ArrayList<>();
+        package_name = new ArrayList<>();
+        appName = new ArrayList<>();
+        textOfNotification = new ArrayList<>();
+        user = new ArrayList<>();
+        post_time = new ArrayList<>();
+        chanel_id = new ArrayList<>();
+        group_id = new ArrayList<>();
+
+        storeDataInArrays();
+
+        notificationsAdapter = new NotificationsAdapter(MainActivity.this, notification_id, package_name, appName, user, textOfNotification, post_time, chanel_id, group_id);
+        recyclerView.setAdapter(notificationsAdapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
 
         // If the user did not turn the notification listener service on we prompt him to do so
         if(!isNotificationServiceEnabled()){
@@ -45,63 +55,33 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Finally we register a receiver to tell the MainActivity when a notification has been received
-        imageChangeBroadcastReceiver = new ImageChangeBroadcastReceiver();
-        changeBroadcastReceiver = new ChangeBroadcastReceiver();
+        /*imageChangeBroadcastReceiver = new ImageChangeBroadcastReceiver();
+        ChangeBroadcastReceiver changeBroadcastReceiver = new ChangeBroadcastReceiver();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("com.example.notisaver");
         registerReceiver(imageChangeBroadcastReceiver, intentFilter);
         registerReceiver(changeBroadcastReceiver, intentFilter);
+         */
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(imageChangeBroadcastReceiver);
     }
 
-    /**
-     * Change Intercepted Notification Image
-     * Changes the MainActivity image based on which notification was intercepted
-     * @param notificationCode The intercepted notification code
-     */
-    private void changeInterceptedNotificationImage(int notificationCode){
-        switch(notificationCode){
-            case NotificationListenerExampleService.InterceptedNotificationCode.FACEBOOK_CODE:
-                interceptedNotificationImageView.setImageResource(R.drawable.facebook_logo);
-                break;
-            case NotificationListenerExampleService.InterceptedNotificationCode.INSTAGRAM_CODE:
-                interceptedNotificationImageView.setImageResource(R.drawable.instagram_logo);
-                break;
-            case NotificationListenerExampleService.InterceptedNotificationCode.WHATSAPP_CODE:
-                interceptedNotificationImageView.setImageResource(R.drawable.whatsapp_logo);
-                break;
-            case NotificationListenerExampleService.InterceptedNotificationCode.OTHER_NOTIFICATIONS_CODE:
-                interceptedNotificationImageView.setImageResource(R.drawable.other_notification_logo);
-                break;
-        }
-    }
-
-    /**
-     * Image Change Broadcast Receiver.
-     * We use this Broadcast Receiver to notify the Main Activity when
-     * a new notification has arrived, so it can properly change the
-     * notification image
-     * */
-    public class ImageChangeBroadcastReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            int receivedNotificationCode = intent.getIntExtra("Notification Code",-1);
-            changeInterceptedNotificationImage(receivedNotificationCode);
-        }
-    }
-
-    public class ChangeBroadcastReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            packageName.setText("Package name " + intent.getStringExtra("package name"));
-            user.setText(intent.getStringExtra("user"));
-            textOfNotification.setText(intent.getStringExtra("notification"));
-        }
+    void storeDataInArrays() {
+        Cursor cursor = dbHelper.readNotifications();
+        if (cursor.getCount() > 0)
+            while (cursor.moveToNext()) {
+                notification_id.add(cursor.getString(0));
+                package_name.add(cursor.getString(1));
+                appName.add(cursor.getString(2));
+                user.add(cursor.getString(3));
+                textOfNotification.add(cursor.getString(4));
+                post_time.add(cursor.getString(5));
+                chanel_id.add(cursor.getString(6));
+                group_id.add(cursor.getString(7));
+            }
     }
 
 
