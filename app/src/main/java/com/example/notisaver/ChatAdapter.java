@@ -46,7 +46,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         String time =  simpleDateFormat1.format(realTime);
         holder.time_txt.setText(time);
 
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat2 = new SimpleDateFormat("dd MMMMM");
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat2 = new SimpleDateFormat("dd MMMM");
         String date =  simpleDateFormat2.format(realTime);
         holder.date_txt.setText(date);
 
